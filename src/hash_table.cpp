@@ -18,6 +18,10 @@ namespace itis {
     }
 
     // Tip: allocate hash-table buckets
+    for (int i = 0; i < capacity; i++){
+        std::list<std::pair<int, std::string>> list;
+        buckets_.push_back(list);
+    }
   }
 
   std::optional<std::string> HashTable::Search(int key) const {
