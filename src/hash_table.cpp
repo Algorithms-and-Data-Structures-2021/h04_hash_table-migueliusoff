@@ -26,15 +26,47 @@ namespace itis {
 
   std::optional<std::string> HashTable::Search(int key) const {
     // Tip: compute hash code (index) and use linear search
+    int key_hash = hash(key);
+    if (!buckets_[key_hash].empty()){
+        for (auto pair : buckets_[key_hash]){
+            if (pair.first == key){
+                return pair.second;
+            }
+        }
+    }
     return std::nullopt;
   }
 
   void HashTable::Put(int key, const std::string &value) {
     // Tip 1: compute hash code (index) to determine which bucket to use
     // Tip 2: consider the case when the key exists (read the docs in the header file)
+    int key_hash = hash(key);
+    bool has_similar_key = false;
 
+    if (!buckets_[key_hash].empty()){
+        for(auto& pair : buckets_[key_hash]){
+            if (pair.first == key){
+                pair.second = value;
+                has_similar_key = true;
+                break;
+            }
+        }
+    }
+    if (!has_similar_key){
+        buckets_[key_hash].emplace_back(key, value);
+    }
+    num_keys_++;
     if (static_cast<double>(num_keys_) / buckets_.size() >= load_factor_) {
       // Tip 3: recompute hash codes (indices) for key-value pairs (create a new hash-table)
+      std::vector<Bucket> new_buckets(capacity() * kGrowthCoefficient);
+      std::list<std::pair<int, std::string>> empty_list;
+      for (auto list : buckets_){
+          if (!list.empty()){
+              int new_hash = utils::hash(list.front().first, new_buckets.size());
+              new_buckets[new_hash] = list;
+          }
+      }
+      buckets_ = new_buckets;
       // Tip 4: use utils::hash(key, size) to compute new indices for key-value pairs
     }
   }
@@ -42,6 +74,22 @@ namespace itis {
   std::optional<std::string> HashTable::Remove(int key) {
     // Tip 1: compute hash code (index) to determine which bucket to use
     // TIp 2: find the key-value pair to remove and make a copy of value to return
+    int key_hash = hash(key);
+    if (!buckets_[key_hash].empty()){
+        std::pair<int, std::string> pair_to_delete;
+        bool has_key = false;
+        for (auto pair : buckets_[key_hash]){
+            if (pair.first == key){
+                pair_to_delete = pair;
+                has_key = true;
+                break;
+            }
+        }
+        if (has_key){
+            buckets_[key_hash].remove(pair_to_delete);
+            return pair_to_delete.second;
+        }
+    }
     return std::nullopt;
   }
 
